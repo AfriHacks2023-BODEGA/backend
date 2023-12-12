@@ -6,6 +6,40 @@ app = Flask(__name__)
 response = ""
 selected_items = []
 
+# menus = Menu("", "Welcome to Bodega", [
+#     Menu("To continue", "What service do you want to use", [
+#         Menu("Seller/Farmer", "What do you want to do", [
+#             Menu("Verify NIN", "Put your NIN number here",
+#                  default_options=Menu("", "Thank you for providing your NIN", ending=True)),
+#             Menu("Manage Account", "", [
+#                 Menu("See Orders", "Here a list of orders that you have",
+#                      options=[order],),
+#                 Menu("Add Item", default_options=item_flow)
+#             ]),
+#             Menu("Sign Up", title="What is your full name",
+#                  default_options=Menu(label="", title="What is your location",  default_options=item_flow, fallthrough=True), fallthrough=True)
+#         ]),
+#         Menu("Buyer/Retailer", "What do you want to do", options=[
+#             Menu("See Orders", "Here's a list of orders that you have"),
+#             Menu("I want to buy something", "What do you want to buy",
+#                  items,
+#                  fallthrough=True,
+#                  default_options=Menu(
+#                      "",
+#                      "Here are some sellers we found",
+#                      [placing_order],
+#                      fallthrough=True,
+#                      default_options=Menu("",
+#                                           "We would send a message informing the seller about your request", ending=True),
+#                  ),
+#                  )
+#         ]),
+#         Menu("Loan", "What do type of loan do you want to apply for", [
+#             Menu("Farm loans")
+#         ]),
+#     ])
+# ])
+
 
 class Menu:
     def __init__(self,
@@ -14,13 +48,14 @@ class Menu:
                  options: List["Menu"] = [],
                  default_options: Union["Menu", None] = None,
                  fallthrough: bool = False,
+                 ending: bool = False
                  ) -> None:
         self.options = options
         self.label = label
         self.title = title
         self.default = default_options
         self.fallthrough = fallthrough
-        self.ending = len(options) == 0 and default_options == None
+        self.ending = ending
 
     def get_item_string(self, text: str) -> str:
         if text == "":
@@ -44,97 +79,67 @@ class Menu:
             return self.options[value - 1] if self.options[value - 1] != None else self
 
     def to_string(self, ) -> str:
-        string = f"CON {self.title}\n"
+        string = f"{'END' if self.ending else 'CON'} {self.title}\n"
+
         for index, option in enumerate(self.options):
             string += f"{index+1}. {option.label}\n"
 
-        string += f"{'0. Go back' if len(self.options) > 0 or self.ending else ''}"
+        string += f"{'0. Go back' if len(self.options) > 0 else ''}"
         return string
 
 
-items = [Menu(x) for x in ['Onions', 'Tomatoes', 'Rice', 'Beans', 'Fruits']]
+items = [Menu(x) for x in ['Yam', 'Tomatoes', 'Rice', 'Beans', 'Fruits']]
 
-item_flow = Menu(
-    "", title="What do you sell", options=items,
-    fallthrough=True,
-    default_options=Menu("",
-                         "What is the quantiy of items",
-                         fallthrough=True,
-                         default_options=Menu("",
-                                              "What is the price of item",
-                                              default_options=Menu(
-                                                  "", title="You have successfuly added items to your items list",
-                                              ),
-                                              ),
-                         )
-)
+order = Menu("Olalekan Adeoye - 100 Yams @₦220,000",
+             "What do you want to do with the order 'Olalekan Adeoye - 100 Yams@ ₦220,000'", [
+                 Menu("Accept",
+                      "We inform the buyer of the interest to sell. Expect a SMS with more information",
+                      ending=True),
+                 Menu("Reject",
+                      "We inform the buyer that you are not willing to sell.",
+                      ending=True)
+             ])
+placing_order = Menu("Olalekan Adeoye - 12 Yam@₦10,000")
 
-menus = Menu("", "Welcome to Bodega", [
-    Menu("To continue", "What service do you want to use", [
-        Menu("Seller/Farmer", "What do you want to do", [
-            Menu("Verify NIN", "Put your NIN number here",
-                 default_options=Menu("", "Thank you for providing your NIN")),
-            Menu("Manage Account", "", [
-                Menu("See Orders", "Here a list of orders that you have"),
-                Menu("Add Item",)
-            ]),
-            Menu("Sign Up", title="What is your full name",
-                 default_options=Menu(label="", title="What is your location",  default_options=item_flow, fallthrough=True), fallthrough=True)
-        ]),
-        Menu("Buyer/Retailer", "What do you want to do", options=[
-            Menu("See Orders", "Here's a list of orders that you have"),
-            Menu("I want to buy something", "What do you want to buy",
-                 [],
-                 fallthrough=True,
-                 default_options=Menu(
-                     "",
-                     "Here are some sellers we found",
-                     items,
-                     fallthrough=True,
-                     default_options=Menu("",
-                                          "We would send a message informing the seller about your request"),
+
+def get_main_menu():
+    return Menu("", "Welcome to Bodega", [
+        Menu("To continue", "What service do you want to use", [
+            Menu("Set up your account with us", "Enter your NIN Number",
+                default_options=Menu(
+                    "",
+                    "Enter your Federal Ministry of Agriculture and Food Security Licence Number",
+                    default_options=Menu("", "Thank you for signing up for the platform", ending=True),),
                  ),
-                 )
-        ]),
-        Menu("Loan", "What do type of loan do you want to apply for", [
-            Menu("Farm loans")
-        ]),
-    ])
-])
-
-
-def main_menu():
-    return "CON Welcome to Bodega\n1 To continue\n0 To leave"
-
-
-def buy_sell_menu():
-    return "CON Do you want to buy or sell?\n1 Sell\n2 Buy"
-
-
-def items_menu():
-    return "CON Items\n1 Onions\n2 Tomatoes\n3 Rice\n4 Beans\n5 Fruits"
-
-
-def go_back(text):
-    # Remove the last two parts of the text to go back dynamically
-    parts = text.split("*")
-    return "*".join(parts[:-1]) if len(parts) > 2 else ""
-
-
-def select_item(item_number):
-    item_dict = {
-        '1': 'Onions',
-        '2': 'Tomatoes',
-        '3': 'Rice',
-        '4': 'Beans',
-        '5': 'Fruits'
-    }
-    item = item_dict.get(item_number)
-    if item:
-        selected_items.append(item)
-        return f"CON You selected: {item}\n1 To finish\n0 To add an item"
-    else:
-        return "CON Invalid item number. Please try again."
+            Menu("Get access to the market", "", options=[
+                Menu("Manage Products", "Manage your product", options=[
+                    Menu(
+                        "Product List", "Here are the products that you listed on the market", [
+                            Menu("Yam")
+                        ]),
+                    Menu("Add Product", "What product do you want to add",
+                         options=items, fallthrough=True, default_options=Menu("", "You added the product to your product list", ending=True),),
+                    Menu("Remove Product", "What product do you want to remove",
+                         options=[items[0]], fallthrough=True, default_options=Menu("", "You removed the product to your product list", ending=True),),
+                ]),
+                Menu("See Orders", "Here a list of orders that you have", options=[
+                    order
+                ]),
+            ]),
+            Menu("Get start up funding and helps", "Choose provider", [
+                Menu("Government", "Here are the organizations under the government that have plans", options=[
+                    Menu("Federal Ministry of Agriculture and Food Security", "Here are the plans", [
+                        Menu("Loan of ₦500,000 for 6 months",),
+                        Menu("Loan of ₦1,000,000 for 12 months",),
+                        Menu("Loan of ₦1,500,000 for 18 months",),
+                    ], fallthrough=True, default_options=Menu("", "We are processing your request. You will recieve a SMS on the progress application", ending=True),),
+                ]),
+                Menu("Angel Investors",
+                     "Sorry there are no offers right now, We'll inform you of when an offer opens", ending=True),
+                Menu(
+                    "NGOs", "Sorry there are no offers right now, We'll inform you of when an offer opens", ending=True),
+            ]),
+        ])])
 
 
 @app.route('/test', methods=['POST', "GET"])
@@ -146,7 +151,7 @@ def test_ussd():
     # The extra replace shit is for if we miss a last *0
     text = re.sub(r"\*\d+\*0", "", text).replace("*0", "")
 
-    return menus.get_item_string(text)
+    return get_main_menu().get_item_string(text)
 
 
 @app.route('/', methods=['POST', 'GET'])
@@ -185,7 +190,7 @@ def ussd_callback():
     # elif text[len(text)-1] == "0":
     #     text = go_back(text)
     #     return response
-    return menus.get_item_string(text)
+    return get_main_menu().get_item_string(text)
 
 
 if __name__ == "__main__":
