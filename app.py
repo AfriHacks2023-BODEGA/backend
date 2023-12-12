@@ -3,43 +3,6 @@ from typing import List, Union
 import re
 
 app = Flask(__name__)
-response = ""
-selected_items = []
-
-# menus = Menu("", "Welcome to Bodega", [
-#     Menu("To continue", "What service do you want to use", [
-#         Menu("Seller/Farmer", "What do you want to do", [
-#             Menu("Verify NIN", "Put your NIN number here",
-#                  default_options=Menu("", "Thank you for providing your NIN", ending=True)),
-#             Menu("Manage Account", "", [
-#                 Menu("See Orders", "Here a list of orders that you have",
-#                      options=[order],),
-#                 Menu("Add Item", default_options=item_flow)
-#             ]),
-#             Menu("Sign Up", title="What is your full name",
-#                  default_options=Menu(label="", title="What is your location",  default_options=item_flow, fallthrough=True), fallthrough=True)
-#         ]),
-#         Menu("Buyer/Retailer", "What do you want to do", options=[
-#             Menu("See Orders", "Here's a list of orders that you have"),
-#             Menu("I want to buy something", "What do you want to buy",
-#                  items,
-#                  fallthrough=True,
-#                  default_options=Menu(
-#                      "",
-#                      "Here are some sellers we found",
-#                      [placing_order],
-#                      fallthrough=True,
-#                      default_options=Menu("",
-#                                           "We would send a message informing the seller about your request", ending=True),
-#                  ),
-#                  )
-#         ]),
-#         Menu("Loan", "What do type of loan do you want to apply for", [
-#             Menu("Farm loans")
-#         ]),
-#     ])
-# ])
-
 
 class Menu:
     def __init__(self,
@@ -88,18 +51,20 @@ class Menu:
         return string
 
 
-items = [Menu(x) for x in ['Yam', 'Tomatoes', 'Rice', 'Beans', 'Fruits']]
+def get_items() -> List[Menu]:
+    return [Menu(x) for x in ['Yam', 'Tomatoes', 'Rice', 'Beans', 'Fruits']]
 
-order = Menu("Olalekan Adeoye - 100 Yams @₦220,000",
-             "What do you want to do with the order 'Olalekan Adeoye - 100 Yams@ ₦220,000'", [
-                 Menu("Accept",
-                      "We inform the buyer of the interest to sell. Expect a SMS with more information",
-                      ending=True),
-                 Menu("Reject",
-                      "We inform the buyer that you are not willing to sell.",
-                      ending=True)
-             ])
-placing_order = Menu("Olalekan Adeoye - 12 Yam@₦10,000")
+
+def get_order_menu() -> Menu:
+    return Menu("Olalekan Adeoye - 100 Yams @₦220,000",
+                "What do you want to do with the order 'Olalekan Adeoye - 100 Yams@ ₦220,000'", [
+                    Menu("Accept",
+                         "We inform the buyer of the interest to sell. Expect a SMS with more information",
+                         ending=True),
+                    Menu("Reject",
+                         "We inform the buyer that you are not willing to sell.",
+                         ending=True)
+                ])
 
 
 def get_main_menu():
@@ -118,12 +83,12 @@ def get_main_menu():
                             Menu("Yam")
                         ]),
                     Menu("Add Product", "What product do you want to add",
-                         options=items, fallthrough=True, default_options=Menu("", "You added the product to your product list", ending=True),),
+                         options=get_items(), fallthrough=True, default_options=Menu("", "You added the product to your product list", ending=True),),
                     Menu("Remove Product", "What product do you want to remove",
-                         options=[items[0]], fallthrough=True, default_options=Menu("", "You removed the product to your product list", ending=True),),
+                         options=[get_items()[0]], fallthrough=True, default_options=Menu("", "You removed the product to your product list", ending=True),),
                 ]),
                 Menu("See Orders", "Here a list of orders that you have", options=[
-                    order
+                    get_order_menu()
                 ]),
             ]),
             Menu("Get start up funding and helps", "Choose provider", [
@@ -163,33 +128,6 @@ def ussd_callback():
     text = request.values.get("text", "")
     text = re.sub(r"\*\d+\*0", "", text).replace("*0", "")
 
-    # # Main Menu
-    # if text == "":
-    #     response = main_menu()
-
-    # # Buy/Sell Menu
-    # elif text == "1":
-    #     response = buy_sell_menu()
-
-    # # Items Menu
-    # elif text == "1*1" or text == "1*2":
-    #     # THis was before
-    #     # response = "items_menu"
-    #     response = items_menu()
-
-    # # Item Select Menu
-    # elif text.startswith("1*1*") and text.split("*")[-1] in ["1", "2", "3", "4", "5"]:
-    #     item_num = text.split('*')[-1]
-    #     response = select_item(item_num)
-
-    # # Final Menu
-    # elif len(text) == 7 and text[-1] == "1":
-    #     items = " ".join(selected_items)
-    #     response = f"END You are {response}. Your items include {items}.\nYou'll be sent a list of contacts"
-    # # To go back to previous menu
-    # elif text[len(text)-1] == "0":
-    #     text = go_back(text)
-    #     return response
     return get_main_menu().get_item_string(text)
 
 
